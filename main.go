@@ -7,8 +7,10 @@ import (
 )
 
 func main() {
+	var path = "path"
+	var region = "eu-west-1"
 	
-	x, err := getconfig.Config("/c3/services/texttospeech", "eu-west-1")
+	x, err := getconfig.Config(path, region)
 
 	if err != nil {
 		logrus.Fatal(err)
