@@ -1,4 +1,4 @@
-package awsparamstore
+package lib
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -20,8 +20,8 @@ func getSession(awsRegion string) (*session.Session, error) {
 	return sess, nil
 }
 
-// GetConfig retrieves everything from parameter store based on path and region
-func GetConfig(keyName string, awsRegion string) (map[string]string, error) {
+// GetAwsParamStoreData retrieves everything from parameter store based on path and region
+func GetAwsParamStoreData(awsParamStorePath string, awsRegion string) (map[string]string, error) {
 	sess, err := getSession(awsRegion)
 
 	if err != nil {
@@ -32,7 +32,7 @@ func GetConfig(keyName string, awsRegion string) (map[string]string, error) {
 	withDecryption := true
 
 	configMap := make(map[string]string)
-	param, err := ssmsvc.GetParametersByPath(&ssm.GetParametersByPathInput{Path: &keyName, WithDecryption: &withDecryption})
+	param, err := ssmsvc.GetParametersByPath(&ssm.GetParametersByPathInput{Path: &awsParamStorePath, WithDecryption: &withDecryption})
 
 	for param.NextToken != nil {
 		if err != nil {
@@ -44,7 +44,7 @@ func GetConfig(keyName string, awsRegion string) (map[string]string, error) {
 			configMap[key] = *element.Value
 		}
 
-		param, err = ssmsvc.GetParametersByPath(&ssm.GetParametersByPathInput{Path: &keyName, WithDecryption: &withDecryption, NextToken: param.NextToken})
+		param, err = ssmsvc.GetParametersByPath(&ssm.GetParametersByPathInput{Path: &awsParamStorePath, WithDecryption: &withDecryption, NextToken: param.NextToken})
 	}
 
 	return configMap, nil

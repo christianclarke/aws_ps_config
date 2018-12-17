@@ -25,7 +25,7 @@ func init() {
 }
 
 func main() {
-	config, err := awsparamstore.GetConfig(awsParamStorePath, awsRegion)
+	config, err := lib.GetAwsParamStoreData(awsParamStorePath, awsRegion)
 
 	if err != nil {
 		logrus.Fatal(err)
