@@ -3,9 +3,9 @@ package main
 import (
 	"aws_ps_config/lib"
 	"flag"
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
+	"os/exec"
 )
 
 var awsParamStorePath string
@@ -32,5 +32,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(config)
+	lib.SetEnvironmentVars(config)
+	command := exec.Command(executable)
+	err = command.Run()
+
+	if (err != nil) {
+		logrus.Fatal(err)
+		os.Exit(1)
+	}
 }
