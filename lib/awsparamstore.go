@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func getSession(awsRegion string) (*session.Session, error) {
+func getAwsSession(awsRegion string) (*session.Session, error) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		Config:            aws.Config{Region: aws.String(awsRegion)},
 		SharedConfigState: session.SharedConfigEnable,
@@ -20,19 +20,27 @@ func getSession(awsRegion string) (*session.Session, error) {
 	return sess, nil
 }
 
-// GetAwsParamStoreData retrieves everything from parameter store based on path and region
-func GetAwsParamStoreData(awsParamStorePath string, awsRegion string) (map[string]string, error) {
-	sess, err := getSession(awsRegion)
+func getAwsSsmSession(awsRegion string) (*ssm.SSM, error) {
+	session, err := getAwsSession(awsRegion)
 
 	if err != nil {
 		return nil, err
 	}
 
-	ssmsvc := ssm.New(sess, aws.NewConfig().WithRegion(awsRegion))
-	withDecryption := true
+	return ssm.New(session, aws.NewConfig().WithRegion(awsRegion)), nil
+}
 
+// GetAwsParamStoreData retrieves everything from parameter store based on path and region
+func GetAwsParamStoreData(awsParamStorePath string, awsRegion string) (map[string]string, error) {
+	awsSSMSession, err := getAwsSsmSession(awsRegion)
+
+	if err != nil {
+		return nil, err
+	}
+
+	withDecryption := true
 	configMap := make(map[string]string)
-	param, err := ssmsvc.GetParametersByPath(&ssm.GetParametersByPathInput{Path: &awsParamStorePath, WithDecryption: &withDecryption})
+	param, err := awsSSMSession.GetParametersByPath(&ssm.GetParametersByPathInput{Path: &awsParamStorePath, WithDecryption: &withDecryption})
 
 	for param.NextToken != nil {
 		if err != nil {
@@ -44,7 +52,7 @@ func GetAwsParamStoreData(awsParamStorePath string, awsRegion string) (map[strin
 			configMap[key] = *element.Value
 		}
 
-		param, err = ssmsvc.GetParametersByPath(&ssm.GetParametersByPathInput{Path: &awsParamStorePath, WithDecryption: &withDecryption, NextToken: param.NextToken})
+		param, err = awsSSMSession.GetParametersByPath(&ssm.GetParametersByPathInput{Path: &awsParamStorePath, WithDecryption: &withDecryption, NextToken: param.NextToken})
 	}
 
 	return configMap, nil
